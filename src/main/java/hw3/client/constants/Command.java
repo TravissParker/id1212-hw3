@@ -10,5 +10,6 @@ public enum Command {
     LIST,
     READ,
     MODIFY,
-    DELETE
+    DELETE,
+    HELP
 }

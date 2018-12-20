@@ -20,7 +20,7 @@ import static hw3.common.FileManager.SERVER_NAME_IN_REGISTRY;
 
 public class Interpreter implements Runnable {
     private static final String PROMPT = "> ";
-    public static final String WORD_DELIMITER = " ";
+    private static final String WORD_DELIMITER = " ";
     private final Scanner console = new Scanner(System.in);
     private SynchronizedStdOut printer = new SynchronizedStdOut();
     private FileManager server;
@@ -28,6 +28,21 @@ public class Interpreter implements Runnable {
     private Relayable myRemoteObj;
     private int myServerID;
     private String myUsername = "GUEST";  //Used to identify the user when calling to server
+    private static final String WELCOME_MSG = "Welcome to the file catalog!" +
+            " \nAt any time type HELP to see a list of instructions.";
+    private static final String INSTRUCTIONS =
+            "CONNECT: connect to the server.\n" +
+            "LOGIN: login in by name and password.\n" +
+            "LOGOUT: logout from the server and application.\n" +
+            "REGISTER: register a user and password with the server.\n" +
+            "UPLOAD: upload a file by name.\n" +
+            "DOWNLOAD: download a file by name.\n" +
+            "LIST: list all the files in the database with their metadata.\n" +
+            "READ: read the metadata of a file by name.\n" +
+            "MODIFY: modify the metadata of a file by name.\n" +
+            "DELETE: delete a file by name.\n" +
+            "HELP: shows this list.";
+
 
     public Interpreter() throws RemoteException {
         myRemoteObj = new Relayer();
@@ -57,7 +72,7 @@ public class Interpreter implements Runnable {
                 switch (cmd) {
                     case CONNECT:
                         lookupServer("192.168.1.156"); // host address hardcoded during development
-                        printer.println("Connection established");
+                        printer.println(WELCOME_MSG);
                         break;
                     case REGISTER:
                         printer.println("Insert username: ");
@@ -76,6 +91,7 @@ public class Interpreter implements Runnable {
                         break;
                     case LOGOUT:
                         server.logout(myUsername);
+                        myUsername = "GUEST";
                         running = false;
                         break;
                     case UPLOAD:
@@ -131,11 +147,14 @@ public class Interpreter implements Runnable {
                         String deleteFile = readNextLine().trim();
                         server.delete(myUsername, deleteFile);
                         break;
+                    case HELP:
+                        printer.println(INSTRUCTIONS);
+                        break;
                     default:
                         printer.println("Default case");
                 }
             } catch (RemoteException | NotBoundException | MalformedURLException e) {
-                printer.println(e.getMessage());
+                printer.println("That didn't work!");
             }
         }
     }
@@ -159,7 +178,7 @@ public class Interpreter implements Runnable {
         }
     }
 
-    /*
+    /**
     * Used to let server side objects send messages to a single client.
     * */
     private class Relayer extends UnicastRemoteObject implements Relayable {

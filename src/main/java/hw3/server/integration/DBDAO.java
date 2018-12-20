@@ -97,13 +97,13 @@ public class DBDAO {
         }
     }
 
-    public void registerUser(String username, String password) throws UserFriendlyDBException {
+    public void registerUser(String username, String password) throws DBException {
         try {
             registerUserStmt.setString(1, username);
             registerUserStmt.setString(2, password);
             registerUserStmt.executeUpdate();
         } catch (SQLException e) {
-            throw new UserFriendlyDBException("The registration of the user failed.", e);
+            throw new DBException("The registration of the user failed.", e);
         }
 
     }
@@ -118,10 +118,10 @@ public class DBDAO {
             }
     }
 
-    public void insertFile(FileDTO file) throws UserFriendlyDBException, DBException {
+    public void insertFile(FileDTO file) throws DBException {
         try {
              if (doesFileExist(file.getName())) {
-                 throw new UserFriendlyDBException("A file with the name: " + file.getName() + " already exists.");
+                 throw new DBException("A file with the name: " + file.getName() + " already exists.");
             }
             insertFileStmt.setString(1, file.getName());
             insertFileStmt.setString(2, file.getOwner());
@@ -134,7 +134,7 @@ public class DBDAO {
         }
     }
 
-    public FileDTO getFileByName(String file) throws UserFriendlyDBException, DBException {
+    public FileDTO getFileByName(String file) throws DBException {
         FileDTO fileMetaData = null;
         try {
             if (doesFileExist(file)) {
@@ -149,7 +149,7 @@ public class DBDAO {
                         rs.getBoolean(writeIndex),
                         rs.getInt(pidIndex));
             } else {
-                throw new UserFriendlyDBException("The file name doesn't exits: " + file);
+                throw new DBException("The file name doesn't exits: " + file);
             }
         } catch (SQLException e) {
             throw new DBException(GENERIC_ERROR_MSG, e);

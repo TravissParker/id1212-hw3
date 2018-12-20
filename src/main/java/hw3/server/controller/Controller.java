@@ -6,7 +6,6 @@ import hw3.common.FileManager;
 import hw3.common.Relayable;
 import hw3.server.integration.DBDAO;
 import hw3.server.integration.DBException;
-import hw3.server.integration.UserFriendlyDBException;
 import hw3.server.model.Explorer;
 import hw3.server.model.ExplorerSupervisor;
 import hw3.server.net.ServerFileTransferer;
@@ -27,8 +26,9 @@ public class Controller extends UnicastRemoteObject implements FileManager {
     public synchronized void register(String username, String password) throws RemoteException {
         try {
             db.registerUser(username, password);
-        } catch (UserFriendlyDBException e) {
-            throw new RemoteException("The registration failed, try again.");
+        } catch (DBException e) {
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
     }
 
@@ -38,7 +38,7 @@ public class Controller extends UnicastRemoteObject implements FileManager {
             supervisor.addExplorer(new Explorer(username, relayPoint));
             supervisor.notifyUser(username, "Welcome " + username + " you are signed in!");
         } else {
-            throw new RemoteException("Credentials were not found, try again, or register a new user.");
+            throw new RemoteException();
         }
     }
 
@@ -53,10 +53,9 @@ public class Controller extends UnicastRemoteObject implements FileManager {
         // First make sure that there is no such file
         try {
             db.insertFile(file);
-        } catch (UserFriendlyDBException e) {
-            throw new RemoteException("That user name is already taken.");
         } catch (DBException e) {
-            throw new RemoteException("There was a problem when trying to upload the file.");
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
         //we must assume that transfer went alright.
         new ServerFileTransferer(file.getName(), Action.RECEIVE);
@@ -72,7 +71,8 @@ public class Controller extends UnicastRemoteObject implements FileManager {
         try {
             return db.getAllFiles();
         } catch (DBException e) {
-            throw new RemoteException("There was a problem getting a list of all files.");
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
     }
 
@@ -81,16 +81,15 @@ public class Controller extends UnicastRemoteObject implements FileManager {
         try {
             FileDTO file = db.getFileByName(fileName);
             if (!file.isRead()) {
-                throw new RemoteException("The file is not readable, and you are not the owner: " + fileName);
+                throw new RemoteException();
             }
             if (!isOwner(user, file)) {
                 supervisor.notifyAccess(file.getOwner(), user, fileName, "read");
             }
             return file;
         } catch (DBException e) {
-            throw new RemoteException("There was a problem getting the file.");
-        } catch (UserFriendlyDBException e) {
-            throw new RemoteException("A file with that name doesn't exist: " + fileName);
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
     }
 
@@ -103,12 +102,11 @@ public class Controller extends UnicastRemoteObject implements FileManager {
                 db.deleteFileByName(fileName);
             } else {
                 supervisor.notifyAccess(file.getOwner(), user, fileName, "tried to delete");
-                throw new RemoteException("You don't have the necessary privileges");
+                throw new RemoteException();
             }
         } catch (DBException e) {
-            throw new RemoteException("There was a problem deleting the file.");
-        } catch (UserFriendlyDBException e) {
-            throw new RemoteException("A file with that name doesn't exist: " + fileName);
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
 
     }
@@ -141,12 +139,11 @@ public class Controller extends UnicastRemoteObject implements FileManager {
                 supervisor.notifyUser(current.getOwner(), user + " modified your file: " + orgFileName);
             } else {
                 supervisor.notifyAccess(mods.getOwner(), user, orgFileName, "tried to modify");
-                throw new RemoteException("You don't have the necessary privileges");
+                throw new RemoteException();
             }
         } catch (DBException e) {
-            throw new RemoteException("There was a problem modifying the file.");
-        } catch (UserFriendlyDBException e) {
-            throw new RemoteException("A file with that name doesn't exist: " + orgFileName);
+            System.out.println(e.getMessage());
+            throw new RemoteException();
         }
         return null;
     }
